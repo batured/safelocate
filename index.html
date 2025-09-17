@@ -9,6 +9,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <!-- Firebase Auth -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary: #4361ee;
@@ -111,6 +113,16 @@
             color: white;
         }
         
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: var(--box-shadow);
@@ -189,6 +201,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .tab {
@@ -225,9 +238,23 @@
             justify-content: center;
             align-items: center;
             margin: 20px 0;
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRTlFQ0VGIi8+CjxwYXRoIGQ9Ik00MCA0MEM0Ni4xODUzIDQwIDUxLjExMTEgMzUuMDc0NCA1MS4xMTExIDI5QzUxLjExMTEgMjIuOTI1NiA0Ni4xODUzIDE4IDQwIDE4QzMzLjgxNDcgMTggMjguODg4OSAyMi45MjU2IDI4Ljg4ODkgMjlDMjguODg4OSAzNS4wNzQ0IDMzLjgxNDcgNDAgNDAgNDBaIiBmaWxsPSIjNDM2MUVFIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iMjkiIHI9IjEwIiBmaWxsPSIjNENDOUYwIi8+CjxwYXRoIGQ9Ik00MCAxMUM0Mi43NjE0IDExIDQ1LjEzMzMgMTIuNDQ2NCA0Ni40NDQ0IDE0LjY2NjdDNTAgMTAgNDUgNS41NTU1NiA0My4zMzMzIDcuMzMzMzNDNDIuNDQ0NCA0Ljg4ODg5IDQwLjI3NzggMyAzNy43Nzc4IDNDMzMuODg4OSAzIDMxIDYuODg4ODkgMzEgMTFDMzEgMTUuMTExMSAzNC44ODg5IDE4IDM4Ljc3NzggMThDNDEuODg4OSAxOCA0NC42NjY3IDE1LjExMTEgNDUgMTJINDMuMzMzM0M0My4wMDAwIDEzLjY2NjcgNDEuMzMzMyAxNSA0MCAxNVozNy4yMjIyIDI2QzM1LjU1NTYgMjYgMzQuMzMzMyAyNC43Nzc4IDM0LjMzMzMgMjMuMTExMUMzNC4zMzMzIDIxLjQ0NDQgMzUuNTU1NiAyMC4yMjIyIDM3LjIyMjIgMjAuMjIyMkMzOC44ODg5IDIwLjIyMjIgNDAuMTExMSAyMS40NDQ0IDQwLjExMTEgMjMuMTExMUM0MC4xMTExIDI0Ljc3NzggMzguODg4OSAyNiAzNy4yMjIyIDI2WiIgZmlsbD0iIzNBMDBBQyIvPgo8L3N2Zz4K');
-            background-repeat: no-repeat;
-            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .location-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
         }
         
         .contacts-list {
@@ -414,11 +441,98 @@
             cursor: pointer;
         }
         
+        /* Request modal */
+        .request-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .request-content {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            max-width: 500px;
+            width: 100%;
+            box-shadow: var(--box-shadow);
+        }
+        
         footer {
             text-align: center;
             padding: 30px 0;
             color: var(--gray);
             margin-top: 40px;
+        }
+        
+        .use-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .use-case {
+            background: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .use-case h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .use-case i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .pricing {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .pricing-plan {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+        
+        .pricing-plan h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .price {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin: 15px 0;
+        }
+        
+        .contact-form {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin: 40px 0;
+        }
+        
+        .contact-form h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
         }
         
         @media (max-width: 768px) {
@@ -445,6 +559,12 @@
                 width: 100%;
                 justify-content: center;
             }
+            
+            .dashboard-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
@@ -458,11 +578,11 @@
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="#" class="active">Home</a></li>
-                        <li><a href="#">How It Works</a></li>
-                        <li><a href="#">Use Cases</a></li>
-                        <li><a href="#">Pricing</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="#" class="active nav-home">Home</a></li>
+                        <li><a href="#" class="nav-how">How It Works</a></li>
+                        <li><a href="#" class="nav-use">Use Cases</a></li>
+                        <li><a href="#" class="nav-pricing">Pricing</a></li>
+                        <li><a href="#" class="nav-contact">Contact</a></li>
                     </ul>
                 </nav>
                 <div class="auth-buttons" id="authButtons">
@@ -479,7 +599,8 @@
     </header>
 
     <div class="container">
-        <section class="hero">
+        <!-- Home Page Content -->
+        <section class="hero" id="home">
             <h1>Share Your Location Safely with Consent</h1>
             <p>SafeLocate puts you in control - share your real-time location only when you explicitly approve requests from trusted contacts.</p>
             <button class="btn btn-primary" id="getStartedBtn">Get Started</button>
@@ -518,33 +639,156 @@
             </div>
         </section>
 
-        <section class="dashboard" id="dashboard">
+        <!-- How It Works Page Content -->
+        <section class="dashboard" id="how-it-works">
+            <h2>How SafeLocate Works</h2>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Step-by-Step Process</h3>
+                </div>
+                <p>SafeLocate follows a simple but secure process for location sharing:</p>
+                <ol>
+                    <li><strong>Request:</strong> A trusted contact sends you a location request via SMS with a secure link</li>
+                    <li><strong>Consent:</strong> You receive a notification and can approve or deny the request</li>
+                    <li><strong>Share:</strong> If approved, your location is shared for a limited time period</li>
+                    <li><strong>Revoke:</strong> You can stop sharing at any time, even before the session expires</li>
+                </ol>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Security Features</h3>
+                </div>
+                <p>SafeLocate includes multiple layers of security and privacy protection:</p>
+                <ul>
+                    <li>End-to-end encryption for all location data</li>
+                    <li>Short-lived access tokens that automatically expire</li>
+                    <li>No location data stored longer than necessary</li>
+                    <li>Complete audit logs of all access requests</li>
+                    <li>GDPR and CCPA compliant data handling</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Use Cases Page Content -->
+        <section class="dashboard" id="use-cases">
+            <h2>Use Cases</h2>
+            <div class="use-cases">
+                <div class="use-case">
+                    <i class="fas fa-users"></i>
+                    <h3>Family Safety</h3>
+                    <p>Keep track of family members during outings, trips, or emergencies without constant check-ins. Perfect for parents who want to know their children arrived safely at school or friends' houses.</p>
+                </div>
+                <div class="use-case">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Lost Phone Recovery</h3>
+                    <p>Quickly locate a lost or stolen phone by requesting its location from trusted contacts. Even if the phone is on silent, SafeLocate can help you find it.</p>
+                </div>
+                <div class="use-case">
+                    <i class="fas fa-truck"></i>
+                    <h3>Fleet Tracking</h3>
+                    <p>Businesses can track company devices with employee consent. Ideal for delivery services, field technicians, and transportation companies needing real-time location data.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Page Content -->
+        <section class="dashboard" id="pricing">
+            <h2>Pricing Plans</h2>
+            <div class="pricing">
+                <div class="pricing-plan">
+                    <h3>Free</h3>
+                    <div class="price">$0</div>
+                    <ul>
+                        <li>5 location requests per month</li>
+                        <li>Basic location sharing</li>
+                        <li>30-minute session duration</li>
+                        <li>Email support</li>
+                    </ul>
+                    <button class="btn btn-outline">Get Started</button>
+                </div>
+                <div class="pricing-plan">
+                    <h3>Pro</h3>
+                    <div class="price">$4.99/mo</div>
+                    <ul>
+                        <li>Unlimited location requests</li>
+                        <li>Advanced location sharing</li>
+                        <li>24-hour session duration</li>
+                        <li>Priority support</li>
+                        <li>Extended location history</li>
+                    </ul>
+                    <button class="btn btn-primary">Get Started</button>
+                </div>
+                <div class="pricing-plan">
+                    <h3>Business</h3>
+                    <div class="price">$9.99/mo</div>
+                    <ul>
+                        <li>Everything in Pro</li>
+                        <li>Multiple users</li>
+                        <li>Fleet tracking</li>
+                        <li>Custom session durations</li>
+                        <li>API access</li>
+                        <li>Dedicated account manager</li>
+                    </ul>
+                    <button class="btn btn-primary">Get Started</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Page Content -->
+        <section class="dashboard" id="contact">
+            <h2>Contact Us</h2>
+            <div class="contact-form">
+                <p>Have questions or need support? Reach out to our team.</p>
+                <div class="form-group">
+                    <label for="contactName">Name</label>
+                    <input type="text" id="contactName">
+                </div>
+                <div class="form-group">
+                    <label for="contactEmail">Email</label>
+                    <input type="email" id="contactEmail">
+                </div>
+                <div class="form-group">
+                    <label for="contactMessage">Message</label>
+                    <textarea id="contactMessage" rows="5" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 16px;"></textarea>
+                </div>
+                <button class="btn btn-primary">Send Message</button>
+            </div>
+        </section>
+
+        <!-- Main Dashboard -->
+        <section class="dashboard" id="main-dashboard">
             <div class="dashboard-header">
                 <h2>Your SafeLocate Dashboard</h2>
                 <button class="btn btn-primary" id="newRequestBtn">+ New Location Request</button>
             </div>
 
             <div class="tabs">
-                <div class="tab active">Location Sharing</div>
-                <div class="tab">Trusted Contacts</div>
-                <div class="tab">Audit Logs</div>
-                <div class="tab">Settings</div>
+                <div class="tab active" data-tab="location">Location Sharing</div>
+                <div class="tab" data-tab="contacts">Trusted Contacts</div>
+                <div class="tab" data-tab="requests">Pending Requests</div>
+                <div class="tab" data-tab="history">History & Logs</div>
+                <div class="tab" data-tab="settings">Settings</div>
             </div>
 
             <div class="card">
                 <div class="card-header">
                     <h3>Active Location Sessions</h3>
-                    <span>2 Active</span>
+                    <span id="activeSessions">0 Active</span>
                 </div>
-                <p>You are currently sharing your location with 2 trusted contacts.</p>
+                <p>You are currently sharing your location with <span id="sharingWith">0</span> trusted contacts.</p>
+                <button class="btn btn-warning" id="stopSharingBtn">Stop All Sharing</button>
             </div>
 
             <div class="location-map">
-                <p>Live location would be displayed here when sharing</p>
+                <div id="map"></div>
+                <div class="location-info" id="locationInfo">
+                    Location not available
+                </div>
             </div>
 
             <h3>Your Trusted Contacts</h3>
-            <div class="contacts-list">
+            <div class="contacts-list" id="contactsList">
                 <div class="contact-item">
                     <div class="contact-info">
                         <div class="contact-avatar">A</div>
@@ -563,18 +807,6 @@
                         <div>
                             <h4>Bob Smith</h4>
                             <p><span class="status offline"></span> Inactive</p>
-                        </div>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary">View</button>
-                    </div>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-info">
-                        <div class="contact-avatar">E</div>
-                        <div>
-                            <h4>Emma Wilson</h4>
-                            <p><span class="status online"></span> Active now</p>
                         </div>
                     </div>
                     <div>
@@ -633,12 +865,42 @@
         </div>
     </div>
 
+    <!-- Request Modal -->
+    <div class="request-modal" id="requestModal">
+        <div class="request-content">
+            <h2>Request Location Access</h2>
+            <p>Send a secure location request to a trusted contact.</p>
+            <div class="form-group">
+                <label for="contactPhone">Phone Number</label>
+                <input type="tel" id="contactPhone" placeholder="+1234567890">
+            </div>
+            <div class="form-group">
+                <label for="requestMessage">Message (optional)</label>
+                <input type="text" id="requestMessage" placeholder="I'd like to know your location for...">
+            </div>
+            <div class="form-group">
+                <label for="duration">Duration</label>
+                <select id="duration" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 16px;">
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="120">2 hours</option>
+                    <option value="360">6 hours</option>
+                    <option value="720">12 hours</option>
+                </select>
+            </div>
+            <div class="prompt-actions">
+                <button class="btn btn-outline" id="cancelRequestBtn">Cancel</button>
+                <button class="btn btn-primary" id="sendRequestBtn">Send Request</button>
+            </div>
+        </div>
+    </div>
+
     <div class="permission-prompt" id="permissionPrompt">
         <div class="prompt-content">
             <h2>Location Access Request</h2>
-            <p>Alice Johnson is requesting to view your location for the next 30 minutes.</p>
-            <p><strong>Reason:</strong> "We're meeting at the conference and I want to know when you'll arrive."</p>
-            <p>This session will expire at 3:45 PM and you can revoke access at any time.</p>
+            <p><span id="requesterName">Alice Johnson</span> is requesting to view your location for the next <span id="requestDuration">30</span> minutes.</p>
+            <p><strong>Reason:</strong> "<span id="requestReason">We're meeting at the conference and I want to know when you'll arrive.</span>"</p>
+            <p>This session will expire at <span id="expiryTime">3:45 PM</span> and you can revoke access at any time.</p>
             <div class="prompt-actions">
                 <button class="btn btn-outline" id="denyBtn">Deny</button>
                 <button class="btn btn-primary" id="approveBtn">Approve</button>
@@ -668,12 +930,13 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // DOM Elements
         const getStartedBtn = document.getElementById('getStartedBtn');
         const loginBtn = document.getElementById('loginBtn');
         const signupBtn = document.getElementById('signupBtn');
-        const dashboard = document.getElementById('dashboard');
+        const dashboard = document.getElementById('main-dashboard');
         const permissionPrompt = document.getElementById('permissionPrompt');
         const denyBtn = document.getElementById('denyBtn');
         const approveBtn = document.getElementById('approveBtn');
@@ -689,14 +952,115 @@
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
         const logoutBtn = document.getElementById('logoutBtn');
+        const requestModal = document.getElementById('requestModal');
+        const cancelRequestBtn = document.getElementById('cancelRequestBtn');
+        const sendRequestBtn = document.getElementById('sendRequestBtn');
+        const stopSharingBtn = document.getElementById('stopSharingBtn');
+        const locationInfo = document.getElementById('locationInfo');
+        const activeSessions = document.getElementById('activeSessions');
+        const sharingWith = document.getElementById('sharingWith');
+        const navHome = document.querySelector('.nav-home');
+        const navHow = document.querySelector('.nav-how');
+        const navUse = document.querySelector('.nav-use');
+        const navPricing = document.querySelector('.nav-pricing');
+        const navContact = document.querySelector('.nav-contact');
+        const homePage = document.getElementById('home');
+        const howPage = document.getElementById('how-it-works');
+        const usePage = document.getElementById('use-cases');
+        const pricingPage = document.getElementById('pricing');
+        const contactPage = document.getElementById('contact');
+        const tabs = document.querySelectorAll('.tab');
+
+        // Geolocation variables
+        let watchId = null;
+        let currentLocation = null;
+        let map = null;
+        let marker = null;
+
+        // Initialize the map
+        function initMap() {
+            // For a real implementation, you would use a mapping library like Leaflet or Google Maps
+            // This is a simplified representation
+            const mapElement = document.getElementById('map');
+            mapElement.innerHTML = '<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:#e9ecef;"><i class="fas fa-map-marker-alt" style="font-size:48px;color:#4361ee;"></i></div>';
+            
+            // In a real implementation, you would initialize your map here
+            // For example with Leaflet: map = L.map('map').setView([51.505, -0.09], 13);
+        }
+
+        // Get current location
+        function getLocation() {
+            if (navigator.geolocation) {
+                // First get the current position
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentLocation = position;
+                        updateLocationUI(position);
+                        
+                        // Then watch for position changes
+                        watchId = navigator.geolocation.watchPosition(
+                            (position) => {
+                                currentLocation = position;
+                                updateLocationUI(position);
+                                // In a real app, you would send this to your server
+                                console.log("Location updated:", position.coords.latitude, position.coords.longitude);
+                            },
+                            (error) => {
+                                console.error("Error getting location:", error);
+                                locationInfo.textContent = "Error getting location: " + error.message;
+                            },
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 30000
+                            }
+                        );
+                    },
+                    (error) => {
+                        console.error("Error getting location:", error);
+                        locationInfo.textContent = "Error getting location: " + error.message;
+                    }
+                );
+            } else {
+                locationInfo.textContent = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        // Stop location sharing
+        function stopSharing() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            currentLocation = null;
+            locationInfo.textContent = "Location sharing stopped";
+            activeSessions.textContent = "0 Active";
+            sharingWith.textContent = "0";
+            
+            // In a real app, you would notify your server that sharing has stopped
+            console.log("Location sharing stopped");
+        }
+
+        // Update location UI
+        function updateLocationUI(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            locationInfo.textContent = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)} (Accuracy: ${accuracy.toFixed(2)}m)`;
+            
+            // In a real implementation, you would update the map marker here
+            // For example with Leaflet: marker.setLatLng([lat, lng]);
+            
+            // Simulate active sessions for demo
+            activeSessions.textContent = "1 Active";
+            sharingWith.textContent = "1";
+        }
 
         // Event Listeners
         getStartedBtn.addEventListener('click', () => {
             if (auth.currentUser) {
-                dashboard.style.display = 'block';
-                document.querySelector('.hero').style.display = 'none';
-                document.querySelector('.features').style.display = 'none';
-                window.scrollTo(0, 0);
+                showDashboard();
             } else {
                 showAuthModal();
             }
@@ -734,6 +1098,7 @@
                     // Signed in 
                     authModal.style.display = 'none';
                     updateUIForUser(userCredential.user);
+                    showDashboard();
                 })
                 .catch((error) => {
                     authMessage.textContent = error.message;
@@ -762,6 +1127,7 @@
                     }).then(() => {
                         authModal.style.display = 'none';
                         updateUIForUser(userCredential.user);
+                        showDashboard();
                     });
                 })
                 .catch((error) => {
@@ -771,11 +1137,12 @@
         });
 
         logoutBtn.addEventListener('click', () => {
+            stopSharing();
             auth.signOut().then(() => {
                 authButtons.style.display = 'flex';
                 userMenu.style.display = 'none';
-                dashboard.style.display = 'none';
-                document.querySelector('.hero').style.display = 'block';
+                hideAllPages();
+                homePage.style.display = 'block';
                 document.querySelector('.features').style.display = 'grid';
             });
         });
@@ -787,11 +1154,82 @@
 
         approveBtn.addEventListener('click', () => {
             permissionPrompt.style.display = 'none';
+            getLocation(); // Start sharing location
             alert('You have approved the location request. Your location is now being shared for the specified duration.');
         });
 
         newRequestBtn.addEventListener('click', () => {
-            alert('Modal would open to send SMS invites to trusted contacts.');
+            requestModal.style.display = 'flex';
+        });
+
+        cancelRequestBtn.addEventListener('click', () => {
+            requestModal.style.display = 'none';
+        });
+
+        sendRequestBtn.addEventListener('click', () => {
+            const phone = document.getElementById('contactPhone').value;
+            const message = document.getElementById('requestMessage').value;
+            const duration = document.getElementById('duration').value;
+            
+            if (!phone) {
+                alert('Please enter a phone number');
+                return;
+            }
+            
+            // In a real app, you would send this request to your server
+            // which would then send an SMS to the recipient
+            alert(`Location request sent to ${phone}. They will receive an SMS with a secure link.`);
+            requestModal.style.display = 'none';
+        });
+
+        stopSharingBtn.addEventListener('click', () => {
+            stopSharing();
+        });
+
+        // Navigation event listeners
+        navHome.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllPages();
+            homePage.style.display = 'block';
+            document.querySelector('.features').style.display = 'grid';
+            setActiveNav(navHome);
+        });
+
+        navHow.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllPages();
+            howPage.style.display = 'block';
+            setActiveNav(navHow);
+        });
+
+        navUse.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllPages();
+            usePage.style.display = 'block';
+            setActiveNav(navUse);
+        });
+
+        navPricing.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllPages();
+            pricingPage.style.display = 'block';
+            setActiveNav(navPricing);
+        });
+
+        navContact.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllPages();
+            contactPage.style.display = 'block';
+            setActiveNav(navContact);
+        });
+
+        // Tab event listeners
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                // In a real app, you would load the appropriate tab content
+            });
         });
 
         // Auth state observer
@@ -822,13 +1260,23 @@
             const displayName = user.displayName || 'User';
             userAvatar.textContent = displayName.charAt(0).toUpperCase();
             userName.textContent = displayName;
-            
-            // Show dashboard if it was hidden
-            if (window.location.hash === '#dashboard') {
-                dashboard.style.display = 'block';
-                document.querySelector('.hero').style.display = 'none';
-                document.querySelector('.features').style.display = 'none';
-            }
+        }
+
+        function showDashboard() {
+            hideAllPages();
+            dashboard.style.display = 'block';
+            initMap(); // Initialize the map when dashboard is shown
+        }
+
+        function hideAllPages() {
+            const pages = [homePage, howPage, usePage, pricingPage, contactPage, dashboard];
+            pages.forEach(page => page.style.display = 'none');
+            document.querySelector('.features').style.display = 'none';
+        }
+
+        function setActiveNav(navItem) {
+            document.querySelectorAll('nav a').forEach(item => item.classList.remove('active'));
+            navItem.classList.add('active');
         }
 
         // Close modal when clicking outside
@@ -836,7 +1284,13 @@
             if (e.target === authModal) {
                 authModal.style.display = 'none';
             }
+            if (e.target === requestModal) {
+                requestModal.style.display = 'none';
+            }
         });
+
+        // Initialize the app
+        initMap();
 
         // Simulate receiving a location request (for demo purposes)
         setTimeout(() => {
